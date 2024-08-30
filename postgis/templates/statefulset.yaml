@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $.Release.Name }}
+  labels:
+    app: {{ $.Chart.Name }}
+    release: {{ $.Release.Name }}
+spec:
+  replicas: 1
+  minReadySeconds: 10
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+      release: {{ $.Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include "postgresql.conf" . | sha256sum }}
+      labels:
+        app: {{ $.Chart.Name }}
+        release: {{ $.Release.Name }}
+    spec:
+      terminationGracePeriodSeconds: 10
+      serviceAccountName: {{ $.Release.Name }}
+      containers:
+      - name: postgis
+        image: postgis/postgis:{{ $.Chart.AppVersion }}
+        env:
+        {{- range $name, $value := $.Values.environment }}
+        - name: "{{ $name }}"
+          value: "{{ $value }}"
+        {{- end }}
+        ports:
+        - containerPort: 6379
+          protocol: TCP
+        volumeMounts:
+        - name: {{ $.Release.Name }}-data
+          mountPath: /var/lib/postgresql/data
+        # - name: {{ $.Release.Name }}-config
+        #   mountPath: /etc/postgresql/14.0/main/postgresql.conf
+        {{- if $.Values.resources }}
+        resources:
+          requests:
+            cpu: "{{ $.Values.resources.cpu }}"
+            memory: "{{ $.Values.resources.memory }}"
+          limits:
+            cpu: "{{ $.Values.resources.cpu }}"
+            memory: "{{ $.Values.resources.memory }}"
+        {{- end }}
+      volumes:
+      - name: {{ $.Release.Name }}-config
+        configMap:
+          name: {{ $.Release.Name }}
+  volumeClaimTemplates:
+  - metadata:
+      name: {{ $.Release.Name }}-data
+    spec:
+      accessModes:
+      - "ReadWriteOnce"
+      # using the "local path provisioner" by rancher, so stored on disk
+      # https://github.com/rancher/local-path-provisioner
+      # in real production, this would be better off provisioned as e.g. EBS
+      # or better yet, let's just use RDS instead of managing a DB!
+      storageClassName: "local-path"
+      resources:
+        requests:
+          storage: 1Gi

@@ -1,0 +1,15 @@
+replicas: 1
+
+service:
+  port: 5432
+  protocol: "TCP"
+
+environment:
+  PGDATA: "/var/lib/postgresql/data"
+  POSTGRES_PASSWORD: "whereintheworld"
+  POSTGRES_USER: "whereintheworld"
+  POSTGRES_DB: "whereintheworld"
+
+resources:
+  cpu: "1"
+  memory: "4Gi"

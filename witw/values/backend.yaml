@@ -11,6 +11,10 @@ environment:
   GUNICORN_LOGLEVEL: "info"
   GUNICORN_WORKERS: 4
   GUNICORN_THREADS: 2
+  DB_HOST: "postgis.default"
+  DB_PORT: 5432
+  DB_USER: "whereintheworld"
+  DB_PASSWORD: "whereintheworld"
 
 resources:
   cpu: "1"
