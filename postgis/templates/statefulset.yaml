@@ -25,19 +25,20 @@ spec:
       containers:
       - name: postgis
         image: postgis/postgis:{{ $.Chart.AppVersion }}
+        # args: ["-c", "config_file=/etc/postgresql.conf"]
         env:
         {{- range $name, $value := $.Values.environment }}
         - name: "{{ $name }}"
           value: "{{ $value }}"
         {{- end }}
         ports:
-        - containerPort: 6379
+        - containerPort: {{ $.Values.service.port }}
           protocol: TCP
         volumeMounts:
         - name: {{ $.Release.Name }}-data
           mountPath: /var/lib/postgresql/data
         # - name: {{ $.Release.Name }}-config
-        #   mountPath: /etc/postgresql/14.0/main/postgresql.conf
+        #   mountPath: /etc/postgresql.conf
         {{- if $.Values.resources }}
         resources:
           requests:
