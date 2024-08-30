@@ -1,0 +1,13 @@
+command: "./bin/frontend"
+
+replicas: 1
+
+service:
+  port: 3000
+  protocol: "TCP"
+
+environment: {}
+
+resources:
+  cpu: "1"
+  memory: "4Gi"

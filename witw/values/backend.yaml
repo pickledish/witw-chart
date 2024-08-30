@@ -1,0 +1,17 @@
+command: "./bin/backend"
+
+replicas: 1
+
+service:
+  port: 8000
+  protocol: "TCP"
+
+environment:
+  GUNICORN_PORT: 8000
+  GUNICORN_LOGLEVEL: "info"
+  GUNICORN_WORKERS: 4
+  GUNICORN_THREADS: 2
+
+resources:
+  cpu: "1"
+  memory: "4Gi"
