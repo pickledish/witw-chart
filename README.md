@@ -4,8 +4,9 @@ Helm chart for Posthog WITW
 
 ## Overview
 
-There are two charts in this repository:
+There are three charts in this repository:
 
+- `caddy`, which is used to deploy a stateful (just for certs) reverse-proxy for our services
 - `postgis`, which is used to deploy a stateful postgresql instance with the postgis extension
 - `witw`, which is used to deploy stateless services based on the "whereintheworld" image
 
@@ -16,7 +17,7 @@ To deploy the full application, these steps should be followed (in order, DB fir
 **Postgres**
 
 1. First, `cd` into `postgis` and run `helm template .`
-1. Does it look right to you, all the right environment variables, etc? If so, continue
+1. Does it look "correct enough" to you, all the environment variables, etc? If so, continue
 1. Then, run `helm install postgis .`
 1. This will render and upload the resource YAMLs to Kubernetes
 1. After a minute, run `kubectl get pods` and make sure you see the `postgis-0` pod in `Running`
@@ -25,7 +26,7 @@ To deploy the full application, these steps should be followed (in order, DB fir
 
 1. First, `cd` into `witw` and run `helm template . -f values/backend.yaml`
 1. (The `-f values/backend.yaml` tells it to use the "backend" values file and settings)
-1. Does it look right to you, all the right environment variables, etc? If so, continue
+1. Does it look "correct enough" to you, all the environment variables, etc? If so, continue
 1. Then, run `helm install witw-backend .`
 1. This will render and upload the resource YAMLs to Kubernetes
 1. After a minute, run `kubectl get pods` and make sure you see a `witw-backend` pod in `Running`
@@ -37,6 +38,25 @@ To deploy the full application, these steps should be followed (in order, DB fir
 1. Run `kubectl exec -it $WITW_POD -- sh` to get a shell into the running pod above
 1. Run `python manage.py migrate` in that shell to kick off the migrations
 1. If it tells you "No migrations to apply", then you're all up to date!
+
+**Caddy**
+
+1. First, `cd` into `caddy` and run `helm template .`
+1. Does it look "correct enough" to you? If so, continue
+1. Then, run `helm install caddy .`
+1. This will render and upload the resource YAMLs to Kubernetes
+1. After a minute, run `kubectl get pods` and make sure you see the `caddy-0` pod in `Running`
+1. You can also run `kubectl logs caddy-0` to see how the TLS cert process went
+
+## Testing it out
+
+After all of the above steps have been taken, try running:
+
+```
+curl -v https://hog.willett.io/_health
+```
+
+You should get a 200 response with `server: gunicorn` in the headers (and a 300 if you try with `http`). Additionally, if you try with a path looking like `/api/foo`, you should get a 400 error with "unauthorized".
 
 ## Modifying it
 

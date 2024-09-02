@@ -6,6 +6,8 @@ service:
   port: 3000
   protocol: "TCP"
 
+# in here, we'd specify the backend-api URL as "witw-backend.default"
+# and ideally a health check too
 environment: {}
 
 resources:
