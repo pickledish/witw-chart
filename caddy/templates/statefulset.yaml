@@ -12,11 +12,10 @@ spec:
     matchLabels:
       app: {{ $.Chart.Name }}
       release: {{ $.Release.Name }}
-  serviceName: {{ $.Release.Name }}
   template:
     metadata:
       annotations:
-        checksum/config: {{ include "postgresql.conf" . | sha256sum }}
+        checksum/config: {{ include "caddyfile" . | sha256sum }}
       labels:
         app: {{ $.Chart.Name }}
         release: {{ $.Release.Name }}
@@ -24,22 +23,32 @@ spec:
       terminationGracePeriodSeconds: 10
       serviceAccountName: {{ $.Release.Name }}
       containers:
-      - name: postgis
-        image: postgis/postgis:{{ $.Chart.AppVersion }}
-        # args: ["-c", "config_file=/etc/postgresql.conf"]
+      - name: caddy
+        image: caddy:{{ $.Chart.AppVersion }}
+        command: ["caddy"]
+        args: ["run", "--config", "/etc/caddy/caddyfile"]
         env:
         {{- range $name, $value := $.Values.environment }}
         - name: "{{ $name }}"
           value: "{{ $value }}"
         {{- end }}
+        # below, we claim ports 80 and 443 on the entire node
+        # so, implicitly, only one caddy pod per node using this
+        # also means we need no service.yaml, as this does that job
         ports:
-        - containerPort: {{ $.Values.service.port }}
+        - name: {{ $.Release.Name }}-http
+          containerPort: 80
           protocol: TCP
+          hostPort: 80
+        - name: {{ $.Release.Name }}-https
+          containerPort: 443
+          protocol: TCP
+          hostPort: 443
         volumeMounts:
         - name: {{ $.Release.Name }}-data
-          mountPath: /var/lib/postgresql/data
-        # - name: {{ $.Release.Name }}-config
-        #   mountPath: /etc/postgresql.conf
+          mountPath: /data/caddy/
+        - name: {{ $.Release.Name }}-config
+          mountPath: /etc/caddy/
         resources:
           requests:
             cpu: "{{ $.Values.resources.cpu }}"
@@ -51,6 +60,8 @@ spec:
       - name: {{ $.Release.Name }}-config
         configMap:
           name: {{ $.Release.Name }}
+  # this is why it needs to be a statefulset, the persistent path for certs
+  # if it is set up with redis/s3/whatever it can be a deployment again
   volumeClaimTemplates:
   - metadata:
       name: {{ $.Release.Name }}-data
@@ -60,7 +71,6 @@ spec:
       # using the "local path provisioner" by rancher, so stored on disk
       # https://github.com/rancher/local-path-provisioner
       # in real production, this would be better off provisioned as e.g. EBS
-      # or better yet, let's just use RDS instead of managing a DB!
       storageClassName: "local-path"
       resources:
         requests:

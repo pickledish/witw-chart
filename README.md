@@ -29,6 +29,7 @@ To deploy the full application, these steps should be followed (in order, DB fir
 1. Then, run `helm install witw-backend .`
 1. This will render and upload the resource YAMLs to Kubernetes
 1. After a minute, run `kubectl get pods` and make sure you see a `witw-backend` pod in `Running`
+1. Then, follow the same steps but with `-f values/frontend.yaml` for the frontend!
 
 **Migrations**
 

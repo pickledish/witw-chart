@@ -1,0 +1,7 @@
+replicas: 1
+
+environment: {}
+
+resources:
+  cpu: "1"
+  memory: "4Gi"
